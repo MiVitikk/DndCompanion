@@ -1,12 +1,22 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View } from 'react-native';
+import { createDrawerNavigator } from '@react-navigation/drawer';
+import { NavigationContainer } from '@react-navigation/native';
+import Monsters from './components/Monsters';
+import Spells from './components/Spells';
+import Encounters from './components/Encounters';
+
+const Drawer = createDrawerNavigator();
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <NavigationContainer>
+      <Drawer.Navigator >
+        <Drawer.Screen name="Monsters" component={Monsters} />
+        <Drawer.Screen name="Spells" component={Spells} />
+        <Drawer.Screen name="Encounters" component={Encounters} />
+      </Drawer.Navigator>
+    </NavigationContainer>
   );
 }
 
