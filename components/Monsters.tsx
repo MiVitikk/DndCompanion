@@ -1,58 +1,9 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, FlatList, Button, Modal, Image, ActivityIndicator, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, FlatList, Button, Modal, Image, ActivityIndicator, ScrollView, TextInput } from 'react-native';
 import { useEffect, useState } from 'react';
 import { fetchMonsters } from '../api/MonsterAPI';
+import { Monster, MonsterDetails, MonsterImage } from '../types/Monster';
 
-type Monster = {
-    index: string;
-    name: string;
-    url: string;
-}
-
-type MonsterDetails = {
-    name: string;
-    index: string;
-    size: string;
-    type: string;
-    image: string;
-    alignment: string;
-    strength: number;
-    dexterity: number;
-    constitution: number;
-    intelligence: number;
-    charisma: number;
-    wisdom: number;
-    armor_class: Array<{ type: string; value: number }>;
-    hit_points: number;
-    speed: {
-        walk: string;
-        swim?: string;
-        fly?: string;
-    };
-    savingThrows?: Array<{
-        value: number;
-        proficiency: {
-            name: string;
-        }
-    }>;
-    damage_immunities: string[];
-    damage_vulnerabilities: string[];
-    damage_resistances: string[];
-    condition_immunities?: Array<{
-        index: string;
-        name: string;
-        url: string;
-    }>;
-    senses: {
-        passive_perception: number;
-        blindsight?: string;
-        truesight?: string;
-        darkvision?: string;
-    };
-
-
-
-}
 
 
 export default function Monsters() {
@@ -61,6 +12,7 @@ export default function Monsters() {
     const [monsterDetails, setMonsterDetails] = useState<MonsterDetails | null>(null);
     const [index, setIndex] = useState('')
     const [loading, setLoading] = useState(false)
+    const [keyword, setKeyword] = useState('')
 
     // Fetches the list of monsters from the API
     const loadMonsters = async () => {
@@ -99,13 +51,32 @@ export default function Monsters() {
         setLoading(false);
     }
 
+    const handleSearch = (keyword: string) => {
+        const filteredMonsters = monsters.filter(monster =>
+            monster.name.toLowerCase().includes(keyword.toLowerCase())
+        );
+        setMonsters(filteredMonsters);
+
+    }
+
     useEffect(() => {
         loadMonsters();
     }, []);
 
     return (
         <View style={styles.container}>
-            <Text>Here be monsters!</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 10, marginTop: 10, gap: 15 }}>
+            <TextInput
+                value={keyword}
+                style={styles.textInput}
+                placeholder="Search monsters..."
+                onChangeText={text => setKeyword(text)}
+            />
+            
+            <Button color={styles.button.color} title="Search" onPress={() => handleSearch(keyword)} />
+            <Button color={styles.button.color} title="Reset" onPress={() => { setKeyword(''); loadMonsters(); }} />
+            </View>
+            
             <FlatList
                 data={monsters}
                 style={styles.list}
@@ -123,20 +94,21 @@ export default function Monsters() {
             />
             <Modal
                 animationType="slide"
+                style={styles.modal}
                 backdropColor='#f7e7d1'
                 visible={selectedMonster !== null}
                 onRequestClose={() => setSelectedMonster(null)}
             >
                 <View style={styles.modalContent}>
                     {monsterDetails && (
-                        <ScrollView>
+                        <ScrollView >
                             <View>
                                 {loading ? <ActivityIndicator size="large" color="#ff0000" /> :
-                                    <Image source={{ uri: `https://www.dnd5eapi.co${monsterDetails.image}` }} style={{ width: 400, height: 200 }} />
+                                    <Image source={{ uri: `https://www.dnd5eapi.co${monsterDetails.image}` }} style={styles.image} />
                                 }
                                 <Text style={styles.modalHeader}>{monsterDetails.name}</Text>
                                 <Text style={{ fontStyle: 'italic' }}>{monsterDetails.size} {monsterDetails.type}, {monsterDetails.alignment}</Text>
-                                <View>
+                                <View style={styles.detailsContainer}>
                                     <View style={styles.separator} />
                                     <Text>Armor Class: {monsterDetails.armor_class[0].value} {"\n"}
                                         Hit Points: {monsterDetails.hit_points}{"\n"}
@@ -165,7 +137,7 @@ export default function Monsters() {
                                     <Text>{monsterDetails.charisma}</Text>
                                 </View>
 
-                                <View style={styles.modalText}>
+                                <View style={styles.detailsContainer}>
                                     <View style={styles.separator} />
 
                                     {monsterDetails.damage_immunities?.length > 0 ? (<Text >Damage Immunities: {monsterDetails.damage_immunities?.join(', ')}</Text>) : (<Text >Damage Immunities: None</Text>)}
@@ -179,6 +151,33 @@ export default function Monsters() {
                                         <Text>Senses: Passive Perception:{monsterDetails.senses.passive_perception} {monsterDetails.senses.blindsight ? `Blindsight: ${monsterDetails.senses.blindsight}, ` : ''}{monsterDetails.senses.truesight ? `Truesight: ${monsterDetails.senses.truesight}, ` : ''}{monsterDetails.senses.darkvision ? `Darkvision: ${monsterDetails.senses.darkvision}` : ''}</Text>
                                     ) : (
                                         <Text>Senses: None</Text>
+                                    )}
+                                </View>
+                                <View style={styles.actionsContainer}>
+                                    <View style={styles.separator} />
+                                    {monsterDetails.special_abilities && monsterDetails.special_abilities.length > 0 && (
+                                        <View>
+                                            {monsterDetails.special_abilities.map((ability, index) => (
+                                                <View key={index}>
+                                                    <Text style={{ fontWeight: 'bold' }}>{ability.name}</Text>
+                                                    <Text>{ability.desc}</Text>
+                                                </View>
+                                            ))}
+                                        </View>
+                                    )}
+                                </View>
+                                <View style={styles.actionsContainer}>
+                                    <View style={styles.separator} />
+                                    {monsterDetails.actions && monsterDetails.actions.length > 0 && (
+                                        <View>
+                                            <Text style={styles.modalHeader}>Actions</Text>
+                                            {monsterDetails.actions.map((action, index) => (
+                                                <View key={index}>
+                                                    <Text style={{ fontWeight: 'bold' }}>{action.name}</Text>
+                                                    <Text>{action.desc}</Text>
+                                                </View>
+                                            ))}
+                                        </View>
                                     )}
                                 </View>
                             </View>
@@ -202,8 +201,20 @@ const styles = StyleSheet.create({
     list: {
         flex: 1,
     },
+    textInput: {
+        height: 40,
+        borderColor: '#7a0800',
+        borderWidth: 1,
+        paddingHorizontal: 10,
+    },
     button: {
         color: '#7a0800',
+    },
+    modal:{
+        borderColor: '#7a0800',
+        borderWidth: 4,
+        borderRadius: 10,
+        alignItems: 'center',
     },
     modalContent: {
         flex: 1,
@@ -211,6 +222,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 20,
         color: '#7a0800',
+        
     },
     item: {
         backgroundColor: '#f7e7d1',
@@ -219,6 +231,13 @@ const styles = StyleSheet.create({
         marginHorizontal: 16,
 
 
+    },
+    image: {
+        width: '100%',
+        height: 400,
+        borderColor: '#7a0800',
+        borderWidth: 4,
+        marginBottom: 10,
     },
     modalHeader: {
         fontSize: 25,
@@ -249,4 +268,13 @@ const styles = StyleSheet.create({
         color: '#7a0800',
 
     },
+    detailsContainer: {
+        marginTop: 10,
+        width: '100%',
+    },
+    actionsContainer: {
+        marginTop: 10,
+        width: '100%',
+        
+    }
 });
