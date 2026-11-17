@@ -4,6 +4,14 @@ export type Monster = {
     url: string;
 }
 
+export type MonsterModalProps = {
+        selectedMonster: Monster | null;
+        setSelectedMonster: (monster: Monster | null) => void;
+        monsterDetails: MonsterDetails | null;
+        loading: boolean;
+    };
+
+
 export type MonsterDetails = {
     name: string;
     index: string;
