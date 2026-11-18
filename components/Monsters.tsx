@@ -20,8 +20,8 @@ export default function Monsters() {
     // Fetches the list of monsters from the API
     const loadMonsters = async () => {
         setLoading(true);
-        const fetchedMonsters = await fetchMonsters();
-        setMonsters(fetchedMonsters);
+        const monsters = await fetchMonsters();
+        setMonsters(monsters);
         setLoading(false);
     }
     /* const fetchMonsters = async () => {
@@ -55,11 +55,13 @@ export default function Monsters() {
     }
 
     // Filters the list of monsters based on the search keyword
-    const handleSearch = (keyword: string) => {
+    const handleSearch = async (keyword: string) => {
+        const monsters = await fetchMonsters();
         const filteredMonsters = monsters.filter(monster =>
             monster.name.toLowerCase().includes(keyword.toLowerCase())
         );
         setMonsters(filteredMonsters);
+        setKeyword('');
 
     }
 
