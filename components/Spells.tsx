@@ -1,34 +1,12 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Modal, FlatList, Button, ActivityIndicator, Image } from 'react-native';
+import { StyleSheet, Text, View, Modal, FlatList, Button, ActivityIndicator, Image, ImageBackground, Dimensions, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useState, useEffect } from 'react';
 import { ScrollView } from 'react-native-gesture-handler';
 import { fetchSpells } from '../api/SpellAPI';
+import { Spell, SpellDetails } from '../types/Spell';
 
-type Spell = {
-  index: string;
-  name: string;
-  level: number;
-  url: string;
-}
-
-type SpellDetails = {
-  name: string;
-  level: number;
-  school: {
-    name: string;
-  };
-  desc: string[];
-  higher_level: string[];
-  components: string[];
-  range: string;
-  duration: string;
-  casting_time: string;
-  concentration?: boolean;
-  ritual?: boolean;
-  material?: string;
-}
-
+const { width, height } = Dimensions.get('window');
 
 export default function Spells() {
   const navigation = useNavigation();
@@ -38,6 +16,7 @@ export default function Spells() {
   const [selectedSpell, setSelectedSpell] = useState<Spell | null>(null)
   const [spellDetails, setSpellDetails] = useState<SpellDetails | null>(null)
   const [index, setIndex] = useState('')
+  const [keyword, setKeyword] = useState('')
 
 
   /* const fetchSpells = async () => {
@@ -69,127 +48,170 @@ export default function Spells() {
     setLoading(true)
     try {
       const response = await fetch(`https://www.dnd5eapi.co/api/2014/spells/${index}`)
-      if(!response.ok) {
+      if (!response.ok) {
         throw new Error('HTTP error ' + response.status);
       }
       const data: SpellDetails = await response.json();
       setSpellDetails(data)
       console.log('Fetched spell details: ' + data)
     } catch (error) {
-      console.error ('Error fetching spell details: ' + error)
+      console.error('Error fetching spell details: ' + error)
     }
     setLoading(false)
+  }
+  // Filters the list of spells based on the search keyword
+  const handleSearch = async (keyword: string) => {
+    const spells = await fetchSpells();
+    const filteredSpells = spells.filter(spell =>
+      spell.name.toLowerCase().includes(keyword.toLowerCase())
+    );
+    setKeyword('');
+    setSpells(filteredSpells);
+    
   }
 
   useEffect(() => { loadSpells(); }, []);
 
   return (
+    <ImageBackground source={{uri:`https://www.dnd5eapi.co/api/images/monsters/mummy-lord.png`}} resizeMode="cover" style={styles.imageBackground}>
     <View style={styles.container}>
-      <Text>Spells</Text>
       <StatusBar style="auto" />
-      {loading ? <ActivityIndicator size="large" color="#ff0000" /> :
-      <FlatList
-        data={spells}
-        style={styles.list}
-        keyExtractor={(item) => item.index}
-        renderItem={({ item }) => (
-                            <View style={styles.item}>
-                                <Text>{item.name}</Text>
-                                {item.level ? <Text>Level: {item.level}</Text> : <Text>Level: Cantrip</Text>}
-                                <Button title="View Details" color={styles.button.color} onPress={() => {
-                                    setSelectedSpell(item);
-                                    setIndex(item.index)
-                                    fetchSpellDetails(item.index);  
-                                }} />
-                            </View>
-                        )}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 10, marginTop: 10, gap: 15 }}>
+                          <TextInput
+                              value={keyword}
+                              style={styles.textInput}
+                              placeholder="Search spells..."
+                              placeholderTextColor="#fcfcfc"
+                              onChangeText={text => setKeyword(text)}
+                          />
       
-      />}
+                          <Button color={styles.button.color} title="Search" onPress={() => handleSearch(keyword)} />
+                            <Button color={styles.button.color} title="Reset" onPress={() => { setKeyword(''); loadSpells(); }} />
+                        </View>
+      {loading ? <ActivityIndicator size="large" color="#ff0000" /> :
+      
+        <FlatList
+          data={spells}
+          style={styles.list}
+          keyExtractor={(item) => item.index}
+          renderItem={({ item }) => (
+            <View style={styles.item}>
+              <Text style={styles.itemText}>{item.name}</Text>
+              {item.level ? <Text style={styles.itemText}>Level: {item.level}</Text> : <Text style={styles.itemText}>Level: Cantrip</Text>}
+              <Button title="View Details" color={styles.button.color} onPress={() => {
+                setSelectedSpell(item);
+                setIndex(item.index)
+                fetchSpellDetails(item.index);
+              }} />
+            </View>
+          )}
+
+        />}
       <Modal
         animationType='slide'
         style={styles.modal}
         backdropColor='#f7e7d1'
         visible={selectedSpell != null}
         onRequestClose={() => setSelectedSpell(null)}
-        >
-          {spellDetails && (
-            <ScrollView>
-              <View style={styles.modalContent}>
-                {loading ? <ActivityIndicator size="large" color="#ff0000" /> :
-                        <View>
-                         <Text style={styles.modalHeader}>{spellDetails.name}</Text>
-                         <Text style={{ fontStyle: 'italic', paddingBottom: 10 }}>Level {spellDetails.level} {spellDetails.school.name}</Text>
-                         <Text> Casting Time: {spellDetails.casting_time}</Text>
-                         <Text> Range: {spellDetails.range}</Text>
-                         <Text> Components: {spellDetails.components.join(', ')}</Text>
-                         <Text> Duration: {spellDetails.duration}</Text>
-                          {spellDetails.concentration && <Text> Concentration: Yes</Text>}
-                          {spellDetails.ritual && <Text> Ritual: Yes</Text>}
-                          {spellDetails.material && <Text> Material Components: {spellDetails.material}</Text>}
-                          <View style={styles.separator} />
-                         <Text>{spellDetails.desc}</Text>
-                         <Text> {spellDetails.higher_level && <Text>{spellDetails.higher_level}</Text>}</Text>
-                         </View>                       
-                                                }
-                 <Button title="Close" color={styles.button.color} onPress={() => setSelectedSpell(null)} />                               
-              </View>
-            </ScrollView>
-          )
+      >
+        {spellDetails && (
+          <ScrollView>
+            <View style={styles.modalContent}>
+              {loading ? <ActivityIndicator size="large" color="#ff0000" /> :
+                <View>
+                  <Text style={styles.modalHeader}>{spellDetails.name}</Text>
+                  <Text style={{ fontStyle: 'italic', paddingBottom: 10 }}>Level {spellDetails.level} {spellDetails.school.name}</Text>
+                  <Text> Casting Time: {spellDetails.casting_time}</Text>
+                  <Text> Range: {spellDetails.range}</Text>
+                  <Text> Components: {spellDetails.components.join(', ')}</Text>
+                  <Text> Duration: {spellDetails.duration}</Text>
+                  {spellDetails.concentration && <Text> Concentration: Yes</Text>}
+                  {spellDetails.ritual && <Text> Ritual: Yes</Text>}
+                  {spellDetails.material && <Text> Material Components: {spellDetails.material}</Text>}
+                  <View style={styles.separator} />
+                  <Text>{spellDetails.desc}</Text>
+                  <Text> {spellDetails.higher_level && <Text>{spellDetails.higher_level}</Text>}</Text>
+                </View>
+              }
+              <Button title="Close" color={styles.button.color} onPress={() => setSelectedSpell(null)} />
+            </View>
+          </ScrollView>
+        )
 
-          }
+        }
 
       </Modal>
 
-      
+
     </View>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-        flex: 1,
-        backgroundColor: '#f7e7d1',
-        alignItems: 'stretch',
-    },
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    alignItems: 'stretch',
+  },
 
   list: {
     flex: 1,
+    backgroundColor: 'transparent',
   },
-  button: {
-        color: '#7a0800',
-    },
-  item: {
-        backgroundColor: '#f7e7d1',
-        padding: 5,
-        marginVertical: 8,
-        marginHorizontal: 16,
-    },
-    modal:{
+  textInput: {
+        height: 40,
         borderColor: '#7a0800',
-        borderWidth: 4,
-        borderRadius: 10,
-        alignItems: 'center',
+        borderWidth: 1,
+        paddingHorizontal: 10,
+        color: '#fcfcfc',
     },
-     modalContent: {
+  button: {
+    color: '#7a0800',
+  },
+  item: {
+    backgroundColor: 'transparent',
+    padding: 5,
+    marginVertical: 8,
+    marginHorizontal: 16,
+  },
+  itemText: {
+        color: '#ffffff',
+        fontSize: 22,
+        fontFamily: 'serif',
+    },
+  modal: {
+    borderColor: '#7a0800',
+    borderWidth: 4,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalContent: {
+    flex: 1,
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    padding: 20,
+    color: '#7a0800',
+  },
+  modalHeader: {
+    fontSize: 25,
+    fontWeight: 'bold',
+    marginBottom: 0,
+    color: '#7a0800',
+  },
+  separator: {
+    height: 7,
+    width: "100%",
+    backgroundColor: "#7a0800",
+    borderRadius: 5,
+
+
+
+  },
+  imageBackground: {
         flex: 1,
-        justifyContent: 'flex-start',
-        alignItems: 'center',
-        padding: 20,
-        color: '#7a0800',
-    },
-    modalHeader: {
-        fontSize: 25,
-        fontWeight: 'bold',
-        marginBottom: 0,
-        color: '#7a0800',
-    },
-    separator: {
-        height: 7,
-        width: "100%",
-        backgroundColor: "#7a0800",
-        borderRadius: 5,
-
-
-
+        justifyContent: 'center',
+        height: height,
+        width: width,
     },
 });
