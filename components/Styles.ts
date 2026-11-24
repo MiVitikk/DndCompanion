@@ -18,6 +18,7 @@ export const styles = StyleSheet.create({
         borderWidth: 1,
         paddingHorizontal: 10,
         color: '#fcfcfc',
+        width: 200
     },
     button: {
         color: '#7a0800',

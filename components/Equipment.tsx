@@ -5,7 +5,7 @@ import { SceneMap, TabBar, TabView } from 'react-native-tab-view';
 
 import { styles } from './Styles';
 import { Weapon, WeaponDetails , Armor, ArmorDetails } from '../types/Equipment';
-
+import { fetchArmors, fetchWeapons } from '../api/EquipmentAPI';
 
 
 
@@ -15,11 +15,12 @@ export default function Equipment() {
     const [index, setIndex] = useState('');
     const [keyword, setKeyword] = useState('');
     const [weapons, setWeapons] = useState<Weapon[]>([]);
-    const [armor, setArmor] = useState<Armor[]>([]);
+    const [armors, setArmors] = useState<Armor[]>([]);
     const [weaponDetails, setWeaponDetails] = useState<WeaponDetails | null>(null);
     const [selectedWeapon, setSelectedWeapon] = useState<Weapon | null>(null);
     const [selectedArmor, setSelectedArmor] = useState<Armor | null>(null);
     const [armorDetails, setArmorDetails] = useState<ArmorDetails | null>(null);
+
     const { width, height } = useWindowDimensions();
 
     const [routes] = useState([
@@ -32,12 +33,15 @@ export default function Equipment() {
 
     const fetchEquipment = async () => {
         setLoading(true);
-        fetchWeapons();
-        fetchArmor();
+        const weapons = await fetchWeapons();
+        setWeapons(weapons)
+        const armors = await fetchArmors();
+        setArmors(armors)
+        console.log(armors)
         setLoading(false);
     }
 
-    const fetchWeapons = async () => {
+    /* const fetchWeapons = async () => {
         setLoading(true);
         try {
             const response = await fetch('https://www.dnd5eapi.co/api/2014/equipment-categories/weapon');
@@ -51,18 +55,18 @@ export default function Equipment() {
         }
     };
 
-    const fetchArmor = async () => {
+    const fetchArmors = async () => {
         setLoading(true);
         try {
             const response = await fetch('https://www.dnd5eapi.co/api/2014/equipment-categories/armor');
             const data = await response.json();
-            setArmor(data.equipment);
+            setArmors(data.equipment);
         } catch (error) {
             console.error('Error fetching armor:', error);
         } finally {
             setLoading(false);
         }
-    };
+    }; */
 
     const fetchWeaponDetails = async (weapon: Weapon) => {
         setLoading(true);
@@ -99,12 +103,24 @@ export default function Equipment() {
             setLoading(false);
         }
     };
+    //To do
+    /* const handleWeaponSearch = async (keyword: string) => {
+        const weapons = await fetchWeapons();
+        const filteredWeapons = weapons.filter(weapon =>
+            weapon.name.toLowerCase().includes(keyword.toLowerCase())
+        );
+        setWeapons(filteredWeapons)
+        setKeyword('')
+    } */
+
+    
+
+    
 
     const WeaponsRoute = () => (
         <ImageBackground source={{ uri: `https://www.dnd5eapi.co/api/images/monsters/bandit.png` }} resizeMode="cover" style={styles.imageBackground}>
             <View style={styles.container}>
                 <Text>Weapons</Text>
-
                 <FlatList
                     data={weapons}
                     style={styles.list}
@@ -162,7 +178,7 @@ export default function Equipment() {
                 <Text>Armor</Text>
 
                 <FlatList
-                    data={armor}
+                    data={armors}
                     style={styles.list}
                     keyExtractor={(item) => item.index}
                     renderItem={({ item }) => (

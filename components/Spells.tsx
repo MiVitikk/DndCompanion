@@ -3,8 +3,10 @@ import { StyleSheet, Text, View, Modal, FlatList, Button, ActivityIndicator, Ima
 import { useNavigation } from '@react-navigation/native';
 import { useState, useEffect } from 'react';
 import { ScrollView } from 'react-native-gesture-handler';
+
 import { fetchSpells } from '../api/SpellAPI';
 import { Spell, SpellDetails } from '../types/Spell';
+import { styles } from './Styles';
 
 const { width, height } = Dimensions.get('window');
 
@@ -19,24 +21,7 @@ export default function Spells() {
   const [keyword, setKeyword] = useState('')
 
 
-  /* const fetchSpells = async () => {
-    setLoading(true)
-    try {
-      const response = await fetch('https://www.dnd5eapi.co/api/2014/spells')
-      if (!response.ok) {
-        throw new Error('HTTP error ' + response.status)
-      }
-      const data: { results: Spell[] } = await response.json();
-      setSpells(data.results)
-    } catch (error) {
-      console.error('Error fetching spells: ' + error)
-    }
-    console.log('Fetched spells: ', spells)
-    setSpells(spells.slice().sort((a, b) => a.level - b.level))
-    setLoading(false)
-  };
- */
-
+  //Fetches all spells
   const loadSpells = async () => {
     setLoading(true);
     const spells = await fetchSpells();
@@ -44,6 +29,8 @@ export default function Spells() {
     setSpells(spells.slice().sort((a, b) => a.level - b.level));
     setLoading(false);
   }
+
+  // Fetches details for the selected spell
   const fetchSpellDetails = async (index: string) => {
     setLoading(true)
     try {
@@ -148,70 +135,3 @@ export default function Spells() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    alignItems: 'stretch',
-  },
-
-  list: {
-    flex: 1,
-    backgroundColor: 'transparent',
-  },
-  textInput: {
-        height: 40,
-        borderColor: '#7a0800',
-        borderWidth: 1,
-        paddingHorizontal: 10,
-        color: '#fcfcfc',
-    },
-  button: {
-    color: '#7a0800',
-  },
-  item: {
-    backgroundColor: 'transparent',
-    padding: 5,
-    marginVertical: 8,
-    marginHorizontal: 16,
-  },
-  itemText: {
-        color: '#ffffff',
-        fontSize: 22,
-        fontFamily: 'serif',
-    },
-  modal: {
-    borderColor: '#7a0800',
-    borderWidth: 4,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  modalContent: {
-    flex: 1,
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    padding: 20,
-    color: '#7a0800',
-  },
-  modalHeader: {
-    fontSize: 25,
-    fontWeight: 'bold',
-    marginBottom: 0,
-    color: '#7a0800',
-  },
-  separator: {
-    height: 7,
-    width: "100%",
-    backgroundColor: "#7a0800",
-    borderRadius: 5,
-
-
-
-  },
-  imageBackground: {
-        flex: 1,
-        justifyContent: 'center',
-        height: height,
-        width: width,
-    },
-});
